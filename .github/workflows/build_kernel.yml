@@ -1,4 +1,4 @@
-name: Build Kernel with Patches
+name: Build Droidspaces kernel
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir -p toolchain
           cd toolchain
-          wget -q https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/30072026/neutron-clang-30072026.tar.zst
+          wget https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/30072026/neutron-clang-30072026.tar.zst
           tar -xf neutron-clang-30072026.tar.zst
           rm neutron-clang-30072026.tar.zst
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
@@ -44,7 +44,7 @@ jobs:
         run: |
           cd kernel
           mkdir out
-          cp ../.config out/.config
+          cp ../patches/.config out/.config
 
       - name: Build kernel
         run: |
