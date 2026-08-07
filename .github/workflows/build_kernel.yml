@@ -7,17 +7,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout kernel source
-        run: |
-          git clone --depth 1 https://github.com/crdroidandroid/android_kernel_oneplus_sm8350 -b 16.0 kernel
-          cd kernel
-
       - name: Checkout patch repo
         uses: actions/checkout@v4
         with:
           path: patches
 
+      - name: Cache kernel repo
+        id: cache-kernel
+        uses: actions/cache@v4
+        with:
+          path: kernel
+          key: kernel-repo-${{ hashFiles('patches/.config') }}
+          restore-keys: |
+            kernel-repo-
+
+      - name: Clone or fetch kernel source
+        run: |
+          if [ -d "kernel/.git" ]; then
+            echo "Kernel repo exists, fetching updates..."
+            cd kernel
+            git fetch --depth 1 origin 16.0
+            git reset --hard origin/16.0
+          else
+            echo "Cloning kernel repo..."
+            git clone --depth 1 https://github.com/crdroidandroid/android_kernel_oneplus_sm8350 -b 16.0 kernel
+          fi
+
+      - name: Cache Neutron Clang
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: clang-30072026
+
       - name: Setup Neutron Clang
+        if: steps.cache-clang.outputs.cache-hit != 'true'
         run: |
           mkdir -p toolchain
           cd toolchain
@@ -25,7 +49,15 @@ jobs:
           tar -xf neutron-clang-30072026.tar.zst
           rm neutron-clang-30072026.tar.zst
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
-      
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.run_id }}
+          restore-keys: |
+            ccache-
+
       - name: Apply patches
         run: |
           cd kernel
@@ -35,27 +67,23 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y build-essential bc flex bison libssl-dev ccache
-          wget -q https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/30072026/neutron-clang-30072026.tar.zst
-          tar -xf neutron-clang-30072026.tar.zst
-          rm neutron-clang-30072026.tar.zst
-          cd ..
 
-      - name: Download .config
+      - name: Setup .config
         run: |
           cd kernel
-          mkdir out
+          mkdir -p out
           cp ../patches/.config out/.config
 
       - name: Build kernel
         run: |
           cd kernel
           export PATH="$GITHUB_WORKSPACE/toolchain/bin:$PATH"
-          make O=out LLVM=1 ARCH=arm64 -j$(nproc) CC="clang" olddefconfig
-          make O=out LLVM=1 ARCH=arm64 -j16 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" | tee build.txt
+          export CCACHE_DIR=~/.ccache
+          make O=out LLVM=1 LLVM_IAS=1 ARCH=arm64 -j$(nproc) CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          make O=out LLVM=1 LLVM_IAS=1 ARCH=arm64 -j$(nproc) CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" | tee build.txt
 
       - name: Upload Image.gz
         uses: actions/upload-artifact@v4
         with:
           name: Image
-          path: out/kernel/arch/arm64/boot/Image.gz
-          
+          path: kernel/out/arch/arm64/boot/Image.gz
