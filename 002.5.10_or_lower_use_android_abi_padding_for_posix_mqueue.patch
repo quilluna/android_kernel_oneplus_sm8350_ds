@@ -1,0 +1,40 @@
+From d9666caf2efa2504d3e24f9e46cdce950ffdba9b Mon Sep 17 00:00:00 2001
+From: Quilluna <quilluna@outlook.com>
+Date: Fri, 7 Aug 2026 21:31:53 +0800
+Subject: [PATCH] ABI: use ABI padding for POSIX_MQUEUE
+
+---
+ include/linux/sched/user.h | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/include/linux/sched/user.h b/include/linux/sched/user.h
+index 573b448e0..72901c81b 100644
+--- a/include/linux/sched/user.h
++++ b/include/linux/sched/user.h
+@@ -23,7 +23,7 @@ struct user_struct {
+ #endif
+ #ifdef CONFIG_POSIX_MQUEUE
+ 	/* protected by mq_lock	*/
+-	unsigned long mq_bytes;	/* How many bytes can be allocated to mqueue? */
++//	unsigned long mq_bytes;	/* How many bytes can be allocated to mqueue? */
+ #endif
+ 	unsigned long locked_shm; /* How many pages of mlocked shm ? */
+ 	unsigned long unix_inflight;	/* How many files in flight in unix sockets */
+@@ -40,9 +40,13 @@ struct user_struct {
+ 
+ 	/* Miscellaneous per-user rate limit */
+ 	struct ratelimit_state ratelimit;
+-
++#if defined(CONFIG_POSIX_MQUEUE)
++	ANDROID_KABI_USE(1, unsigned long mq_bytes);
++	ANDROID_KABI_RESERVE(2);
++#else
+ 	ANDROID_KABI_RESERVE(1);
+ 	ANDROID_KABI_RESERVE(2);
++#endif
+ };
+ 
+ extern int uids_sysfs_init(void);
+-- 
+2.53.0
+
