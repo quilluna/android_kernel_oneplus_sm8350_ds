@@ -80,10 +80,10 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/toolchain/bin:$PATH"
           export CCACHE_DIR=~/.ccache
           make O=out LLVM=1 LLVM_IAS=1 ARCH=arm64 -j$(nproc) CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-          make O=out LLVM=1 LLVM_IAS=1 ARCH=arm64 -j$(nproc) CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" | tee build.txt
+          make O=out LLVM=1 LLVM_IAS=1 ARCH=arm64 -j$(nproc) CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" LOCALVERSION="-quilluna" | tee build.txt
 
-      - name: Upload Image.gz
+      - name: Upload Image
         uses: actions/upload-artifact@v4
         with:
           name: Image
-          path: kernel/out/arch/arm64/boot/Image.gz
+          path: kernel/out/arch/arm64/boot/Image
