@@ -61,8 +61,8 @@ jobs:
       - name: Apply patches
         run: |
           cd kernel
-          git apply ../patches/*.patch || echo "Patches may not apply cleanly"
-
+          patch -p1 < ../patches/001.GKI-below-6.12-fix_sysvipc_kabi_1_2_3.patch
+          patch -p1 < ../patches/002.5.10_or_lower_use_android_abi_padding_for_posix_mqueue.patch
       - name: Setup build environment
         run: |
           sudo apt update
