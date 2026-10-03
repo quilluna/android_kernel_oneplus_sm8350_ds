@@ -26,11 +26,11 @@ jobs:
           if [ -d "kernel/.git" ]; then
             echo "Kernel repo exists, fetching updates..."
             cd kernel
-            git fetch --depth 1 origin 16.0
-            git reset --hard origin/16.0
+            git fetch --depth 1 origin 17.0
+            git reset --hard origin/17.0
           else
             echo "Cloning kernel repo..."
-            git clone --depth 1 https://github.com/crdroidandroid/android_kernel_oneplus_sm8350 -b 16.0 kernel
+            git clone --depth 1 https://github.com/crdroidandroid/android_kernel_oneplus_sm8350 -b 17.0 kernel
           fi
 
       - name: Cache Neutron Clang
